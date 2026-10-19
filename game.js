@@ -162,6 +162,54 @@ function makeCabin(x, z) {
 }
 makeCabin(-34, -25); makeCabin(49, 65); makeCabin(-70, 80);
 
+// Drivable expedition 4x4 and a visible fictional field patrol.
+const vehicle = new THREE.Group();
+const vehiclePaint = new THREE.MeshStandardMaterial({ color: 0x596b4c, roughness: 0.72, metalness: 0.12 });
+const vehicleTrim = new THREE.MeshStandardMaterial({ color: 0x1e2825, roughness: 0.8 });
+const vehicleGlass = new THREE.MeshStandardMaterial({ color: 0x263f43, roughness: 0.25, metalness: 0.15 });
+const vehicleBody = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.8, 4.2), vehiclePaint);
+vehicleBody.position.y = 0.85; vehicleBody.castShadow = true; vehicle.add(vehicleBody);
+const vehicleCab = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.95, 2.05), vehicleGlass);
+vehicleCab.position.set(0, 1.55, -0.15); vehicleCab.castShadow = true; vehicle.add(vehicleCab);
+const vehicleHood = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.24, 1.15), vehiclePaint);
+vehicleHood.position.set(0, 1.25, -1.48); vehicle.add(vehicleHood);
+for (const z of [-1.35, 1.35]) for (const x of [-1.38, 1.38]) {
+  const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.28, 12), vehicleTrim);
+  wheel.rotation.z = Math.PI / 2; wheel.position.set(x, 0.55, z); wheel.castShadow = true; vehicle.add(wheel);
+}
+const lampMat = new THREE.MeshStandardMaterial({color:0xe6d9a2, emissive:0x66552a, emissiveIntensity:0.6});
+for (const x of [-0.82,0.82]) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.22,0.08),lampMat); lamp.position.set(x,1.0,-2.13); vehicle.add(lamp); }
+vehicle.position.set(8, terrainHeight(8,-16)-0.5, -16); vehicle.castShadow = true; world.add(vehicle);
+const patrols = [];
+function createPatrol(x,z) {
+  const group = new THREE.Group();
+  const uniform = new THREE.MeshStandardMaterial({color:0x6c7459, roughness:0.92});
+  const skin = new THREE.MeshStandardMaterial({color:0xbda184, roughness:0.85});
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.34,0.72,4,7),uniform); torso.position.y=1.05; torso.castShadow=true; group.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.25,10,8),skin); head.position.y=1.72; head.castShadow=true; group.add(head);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.27,10,6,0,Math.PI*2,0,Math.PI/2),vehicleTrim); helmet.position.y=1.82; group.add(helmet);
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.55,0.22),vehicleTrim); pack.position.set(0,1.12,0.34); group.add(pack);
+  group.position.set(x,terrainHeight(x,z)-0.45,z); world.add(group);
+  patrols.push({group, hp:3, alive:true, phase:rand()*6, homeX:x, homeZ:z});
+}
+createPatrol(10,-3); createPatrol(-20,22); createPatrol(28,35);
+const shotRay = new THREE.Raycaster();
+let shotCooldown = 0;
+function fireWeapon() {
+  if (!locked || shotCooldown > 0) return;
+  shotCooldown = 0.28;
+  shotRay.setFromCamera(new THREE.Vector2(0,0), camera);
+  const targets = patrols.filter(p=>p.alive).flatMap(p=>p.group.children);
+  const hit = shotRay.intersectObjects(targets,false)[0];
+  if (!hit) { showToast('SHOT FIRED · NO TARGET HIT'); return; }
+  const patrol = patrols.find(p=>p.alive && p.group.children.includes(hit.object));
+  if (!patrol) return;
+  patrol.hp--;
+  if (patrol.hp <= 0) { patrol.alive=false; patrol.group.visible=false; showToast('FIELD PATROL CLEARED'); }
+  else showToast('HIT CONFIRMED · KEEP EXPLORING');
+}
+renderer.domElement.addEventListener('mousedown', e => { if (e.button === 0) fireWeapon(); });
+
 // Glowing collectibles are placed around the playable valley.
 const relics = [];
 const relicGeo = new THREE.OctahedronGeometry(0.9, 0);
@@ -177,7 +225,7 @@ for (const [x, z] of [[-28, 20], [39, 47], [72, -65]]) {
 }
 
 // Player state.
-const player = { x: 0, z: -12, y: terrainHeight(0, -12) + 1.7, vy: 0, yaw: 0, pitch: 0, stamina: 100 };
+const player = { x: 0, z: -12, y: terrainHeight(0, -12) + 1.7, vy: 0, yaw: 0, pitch: 0, stamina: 100, driving: false };
 const keys = new Set();
 let locked = false, collected = 0, lastTime = performance.now(), toastTimer = 0;
 const forward = new THREE.Vector3();
@@ -192,6 +240,7 @@ function showToast(message) {
 }
 function updateCamera() {
   camera.position.set(player.x, player.y, player.z);
+  if (player.driving) camera.position.y += 0.25;
   camera.rotation.order = 'YXZ';
   camera.rotation.y = player.yaw;
   camera.rotation.x = player.pitch;
@@ -229,7 +278,13 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('keydown', e => {
   keys.add(e.code);
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  if (e.code === 'KeyE' && !e.repeat && locked) tryCollect();
+  if (e.code === 'KeyE' && !e.repeat && locked && !player.driving) tryCollect();
+  if (e.code === 'KeyV' && !e.repeat && locked) {
+    const distance = Math.hypot(player.x-vehicle.position.x, player.z-vehicle.position.z);
+    if (player.driving) { player.driving=false; player.x=vehicle.position.x+2.6; player.z=vehicle.position.z; player.y=terrainHeight(player.x,player.z)+1.7; showToast('4x4 PARKED · ON FOOT'); }
+    else if (distance < 5.5) { player.driving=true; showToast('4x4 ENGAGED · WASD DRIVE · V EXIT'); }
+    else showToast('MOVE CLOSER TO THE 4x4');
+  }
 });
 document.addEventListener('keyup', e => keys.delete(e.code));
 window.addEventListener('blur', () => keys.clear());
@@ -246,16 +301,17 @@ function update(dt) {
     if (move.lengthSq() > 0) move.normalize();
 
     const sprinting = (keys.has('ShiftLeft') || keys.has('ShiftRight')) && move.lengthSq() > 0 && player.stamina > 0;
-    const speed = sprinting ? 12.5 : 7.1;
+    const speed = player.driving ? 19 : sprinting ? 12.5 : 7.1;
     if (sprinting) player.stamina = Math.max(0, player.stamina - 28 * dt);
     else player.stamina = Math.min(100, player.stamina + 18 * dt);
     player.x += move.x * speed * dt;
     player.z += move.z * speed * dt;
     player.x = THREE.MathUtils.clamp(player.x, -330, 330);
     player.z = THREE.MathUtils.clamp(player.z, -330, 330);
+    if (player.driving) { vehicle.position.x=player.x; vehicle.position.z=player.z; vehicle.position.y=terrainHeight(player.x,player.z)-0.5; vehicle.rotation.y=player.yaw; }
 
-    const groundY = terrainHeight(player.x, player.z) - 0.5 + 1.7;
-    if (keys.has('Space') && player.y <= groundY + 0.08 && player.vy <= 0) player.vy = 8.3;
+    const groundY = terrainHeight(player.x, player.z) - 0.5 + (player.driving ? 2.0 : 1.7);
+    if (!player.driving && keys.has('Space') && player.y <= groundY + 0.08 && player.vy <= 0) player.vy = 8.3;
     player.vy -= 22 * dt;
     player.y += player.vy * dt;
     if (player.y < groundY) { player.y = groundY; player.vy = 0; }
@@ -266,6 +322,8 @@ function update(dt) {
     sun.target.position.set(player.x, 0, player.z);
   }
 
+  shotCooldown = Math.max(0, shotCooldown-dt);
+  for (const p of patrols) if (p.alive) { p.phase += dt; p.group.position.x=p.homeX+Math.sin(p.phase*0.55)*1.4; p.group.position.z=p.homeZ+Math.cos(p.phase*0.42)*1.2; p.group.position.y=terrainHeight(p.group.position.x,p.group.position.z)-0.45; p.group.rotation.y=Math.atan2(player.x-p.group.position.x,player.z-p.group.position.z); }
   const elapsed = performance.now() * 0.0001;
   for (const relic of relics) {
     if (!relic.collected) {
