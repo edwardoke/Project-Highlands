@@ -195,7 +195,7 @@ function updateCamera() {
   camera.rotation.order = 'YXZ';
   camera.rotation.y = player.yaw;
   camera.rotation.x = player.pitch;
-  headingLabel.textContent = String(Math.round(((THREE.MathUtils.radToDeg(player.yaw) % 360) + 360) % 360).padStart(3, '0')) + '°';
+  headingLabel.textContent = String(Math.round(((THREE.MathUtils.radToDeg(player.yaw) % 360) + 360) % 360)).padStart(3, '0') + '°';
 }
 function tryCollect() {
   let found = false;
