@@ -1,36 +1,61 @@
 # Project Highlands
 
-An original Unity/C# first-person open-world adventure prototype for Windows PC, inspired by Himalayan wilderness exploration. This project does not use proprietary Far Cry code or assets.
+**Project Highlands** is an original browser-based, first-person 3D wilderness adventure inspired by high-altitude mountain exploration. It uses Three.js and JavaScript, so you can play it in a modern desktop browser without installing Unity.
 
-## Prototype features
-- First-person WASD movement, mouse look, sprinting and jumping
-- Generated starter valley with mountain silhouettes, pine-like trees, rocks and a river
-- Directional sunlight, atmospheric fog and a simple day/night cycle
-- Unity editor tool to generate the starter scene
+## Play online
 
-## Setup
-1. Install Unity Hub and a current Unity 3D LTS editor with Windows Build Support.
-2. Open this repository as a Unity project.
-3. Wait for scripts to compile.
-4. In Unity, choose Project Highlands > Build Prototype Scene.
-5. Press Play.
+After GitHub Pages is enabled for this repository, the game will be available at:
 
-Controls: WASD move, mouse look, Left Shift sprint, Space jump, Escape release/relock cursor.
+**https://edwardoke.github.io/Project-Highlands/**
 
-## Current layout
-- Assets/Scripts/Player — movement
-- Assets/Scripts/World — atmosphere
-- Assets/Scripts/Editor — scene generator
-- Assets/Scenes — generated scenes
+The included GitHub Actions workflow deploys the site from the `main` branch. On GitHub, open **Settings → Pages** and choose **GitHub Actions** as the build and deployment source if it is not already selected. Then open **Actions** to monitor the deployment. The first deployment may take a few minutes.
 
-## Unity project configuration
-This repository is currently the source-code foundation. Unity's ProjectSettings and Packages/manifest.json are also needed for a complete project. If these are absent, create a temporary 3D project in Unity Hub and copy those folders into this repository, preserving its Assets folder.
+You can also run it locally without installing Unity. Because the game loads JavaScript modules, serve the repository through a local web server rather than opening `index.html` directly. For example, with Python installed:
+
+```bash
+python -m http.server 8000
+```
+
+Then visit `http://localhost:8000`.
+
+## Browser prototype features
+
+- First-person mouse look and pointer-lock controls
+- WASD movement, sprinting, jumping and stamina
+- Procedurally sculpted valley terrain, distant mountain ridges, fog and sunlight
+- Instanced evergreen forest, scattered rocks, river and small cabins
+- Three glowing signal fragments to find and collect
+- Responsive HUD with objective progress, stamina and compass
+- Lightweight geometry designed for browser rendering
+
+## Controls
+
+| Input | Action |
+|---|---|
+| Click **Enter the Highlands** | Start and capture mouse |
+| W / A / S / D | Move |
+| Mouse | Look around |
+| Left Shift | Sprint |
+| Space | Jump |
+| E | Collect a nearby signal fragment |
+| Esc | Release mouse pointer |
+
+## Project files
+
+- `index.html` — game interface, HUD and intro screen
+- `game.js` — Three.js scene, procedural environment and gameplay
+- `Assets/Scripts/` — earlier Unity/C# prototype scripts, kept for reference
+
+## Notes
+
+This is an early playable prototype, not a complete commercial open-world game. Three.js is loaded from jsDelivr, and fonts are loaded from Google Fonts, so an internet connection is needed for those resources. The environment is generated from original code and primitive geometry; no Far Cry game code or proprietary assets are included.
 
 ## Roadmap
-1. Playable valley prototype
-2. Sculpted terrain, ground materials and optimized vegetation
-3. Wildlife and NPC AI
-4. Missions and outposts
-5. Audio, UI, saving and Windows builds
 
-No license has been selected. Add third-party assets only when you have permission to use them.
+1. Expand the valley and add better terrain materials
+2. Add wildlife, patrols and interactive outposts
+3. Add mission chains, inventory and a save system
+4. Add environmental audio and performance settings
+5. Improve mobile support and accessibility
+
+No license has been selected yet. Only add third-party assets you have permission to use.
