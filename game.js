@@ -179,7 +179,7 @@ for (const z of [-1.35, 1.35]) for (const x of [-1.38, 1.38]) {
 }
 const lampMat = new THREE.MeshStandardMaterial({color:0xe6d9a2, emissive:0x66552a, emissiveIntensity:0.6});
 for (const x of [-0.82,0.82]) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.22,0.08),lampMat); lamp.position.set(x,1.0,-2.13); vehicle.add(lamp); }
-vehicle.position.set(8, terrainHeight(8,-16)-0.5, -16); vehicle.castShadow = true; world.add(vehicle);
+vehicle.position.set(4, terrainHeight(4,-14)-0.5, -14); vehicle.castShadow = true; world.add(vehicle);
 const patrols = [];
 function createPatrol(x,z) {
   const group = new THREE.Group();
