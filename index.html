@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101c20">
+  <meta name="description" content="Project Highlands — an original browser-based 3D wilderness adventure.">
+  <title>Project Highlands | Wilderness Protocol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--mint:#b9f27c;--paper:#eaf0e8;--muted:#9eaca7;--panel:rgba(12,22,24,.78);--line:rgba(226,241,229,.16)}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101c20;color:var(--paper);font-family:Manrope,system-ui,sans-serif}
+    #game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+    .grain{pointer-events:none;position:fixed;inset:0;opacity:.12;z-index:2;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E")}
+    .vignette{pointer-events:none;position:fixed;inset:0;z-index:2;background:radial-gradient(ellipse at center,transparent 38%,rgba(5,12,14,.52) 100%)}
+    .hud{position:fixed;inset:0;z-index:4;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(16px,3vw,38px)}
+    .topline{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}.brand{display:flex;gap:12px;align-items:center}.mark{width:38px;height:38px;border:1px solid var(--mint);display:grid;place-items:center;color:var(--mint);font-family:"DM Mono",monospace;font-size:18px;transform:rotate(45deg)}.mark span{transform:rotate(-45deg)}.brand-title{font:700 22px "Barlow Condensed",sans-serif;letter-spacing:2px;text-transform:uppercase}.eyebrow{font:11px "DM Mono",monospace;letter-spacing:1.6px;color:var(--mint);text-transform:uppercase}.mission{margin-top:2px;text-align:right;max-width:240px}.mission strong{display:block;font:600 18px "Barlow Condensed",sans-serif;letter-spacing:1px;text-transform:uppercase}.mission small{font:10px "DM Mono",monospace;color:var(--muted);letter-spacing:1px}
+    .middle{display:flex;justify-content:space-between;align-items:center;gap:20px}.objective{width:230px;background:linear-gradient(110deg,rgba(10,20,22,.82),rgba(10,20,22,.18));border-left:2px solid var(--mint);padding:14px 16px}.objective .eyebrow{margin-bottom:7px}.objective h2{font:700 23px/1 "Barlow Condensed",sans-serif;text-transform:uppercase;margin:0 0 8px}.objective p{font-size:11px;line-height:1.65;color:#c2cdc6;margin:0}.count{font:11px "DM Mono",monospace;color:var(--mint);margin-top:12px;letter-spacing:1px}.crosshair{position:absolute;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);opacity:.88}.crosshair:before,.crosshair:after{content:"";position:absolute;background:#f4f5e9;box-shadow:0 0 5px #101c20}.crosshair:before{width:1px;height:14px;left:9px;top:3px}.crosshair:after{height:1px;width:14px;left:3px;top:9px}
+    .bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}.status{display:flex;gap:20px;align-items:flex-end}.stat{min-width:82px}.stat-label{font:10px "DM Mono",monospace;color:var(--muted);letter-spacing:1.3px}.stat-value{font:700 23px "Barlow Condensed",sans-serif;letter-spacing:.5px}.bar{width:100px;height:3px;background:#ffffff26;margin-top:5px}.bar i{display:block;width:100%;height:100%;background:var(--mint)}.compass{text-align:center;font:11px "DM Mono",monospace;color:var(--mint);letter-spacing:2px}.compass b{display:block;font:700 20px "Barlow Condensed",sans-serif;color:#fff;margin-top:3px}.hint{font:10px "DM Mono",monospace;letter-spacing:.7px;color:#d2ddd5;text-align:right;line-height:1.8}
+    .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:linear-gradient(90deg,rgba(7,16,18,.88),rgba(7,16,18,.32)),linear-gradient(0deg,rgba(7,16,18,.62),transparent 70%);transition:opacity .35s}.overlay.hidden{opacity:0;pointer-events:none}.intro{width:min(580px,100%);margin-right:auto;margin-left:clamp(0px,8vw,120px)}.intro .eyebrow{display:flex;align-items:center;gap:10px}.intro .eyebrow:before{content:"";height:1px;width:34px;background:var(--mint)}h1{font:800 clamp(52px,9vw,100px)/.82 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:-1px;margin:24px 0 22px}h1 em{font-style:normal;color:var(--mint)}.intro p{max-width:410px;font-size:13px;line-height:1.8;color:#c1ccc6}.start{pointer-events:auto;border:0;background:var(--mint);color:#122019;padding:15px 22px;margin-top:20px;font:800 12px "DM Mono",monospace;letter-spacing:1.2px;cursor:pointer;display:flex;align-items:center;gap:18px;transition:transform .2s,background .2s}.start:hover{transform:translateY(-2px);background:#d0ff9c}.start span{font-size:20px}.fineprint{margin-top:18px;font:10px "DM Mono",monospace;color:#a8b5ae;letter-spacing:.5px}.toast{position:fixed;left:50%;bottom:18%;transform:translate(-50%,10px);z-index:8;padding:12px 18px;background:rgba(10,22,22,.9);border:1px solid #b9f27c88;font:11px "DM Mono",monospace;letter-spacing:.7px;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}.completion{color:var(--mint)!important}
+    @media(max-width:600px){.hud{padding:15px}.brand-title{font-size:18px}.mark{width:30px;height:30px}.mission{max-width:140px}.mission strong{font-size:15px}.objective{width:180px;padding:10px}.objective h2{font-size:19px}.objective p{font-size:10px}.status{gap:10px}.stat{min-width:58px}.stat-value{font-size:19px}.bar{width:58px}.hint{max-width:100px;font-size:9px}.intro{margin:0}.middle{align-items:flex-start}.crosshair{top:53%}}
+  </style>
+</head>
+<body>
+  <div id="game"></div><div class="grain"></div><div class="vignette"></div>
+  <div class="hud" aria-hidden="true">
+    <div class="topline">
+      <div class="brand"><div class="mark"><span>✳</span></div><div><div class="eyebrow">Field operations / 01</div><div class="brand-title">Project Highlands</div></div></div>
+      <div class="mission"><div class="eyebrow">Sector 07 · Himalaya</div><strong>Wilderness protocol</strong><small>FIELD LOG // 06:42 LOCAL</small></div>
+    </div>
+    <div class="middle">
+      <div class="objective"><div class="eyebrow">Primary objective</div><h2>Recover the relics</h2><p>Explore the valley and locate the three signal fragments left along the old river trail.</p><div class="count" id="relic-count">FRAGMENTS &nbsp; 00 / 03</div></div>
+      <div class="crosshair"></div>
+    </div>
+    <div class="bottom">
+      <div class="status">
+        <div class="stat"><div class="stat-label">VITALS</div><div class="stat-value">100 <span style="font-size:12px;color:#9eaca7">%</span></div><div class="bar"><i></i></div></div>
+        <div class="stat"><div class="stat-label">STAMINA</div><div class="stat-value" id="stamina-value">100 <span style="font-size:12px;color:#9eaca7">%</span></div><div class="bar"><i id="stamina-bar"></i></div></div>
+      </div>
+      <div class="compass">N <b id="heading">000°</b></div>
+      <div class="hint">WASD MOVE · SHIFT SPRINT<br>SPACE JUMP · E INTERACT<br>ESC RELEASE MOUSE</div>
+    </div>
+  </div>
+  <div class="overlay" id="intro">
+    <div class="intro">
+      <div class="eyebrow">Open-world field test // build 0.1.0</div>
+      <h1>Beyond<br>the <em>ridge.</em></h1>
+      <p>A forgotten valley. A trail through the highlands. Three fragments waiting to be found. Step into the wilderness and begin your expedition.</p>
+      <button class="start" id="start">ENTER THE HIGHLANDS <span>↗</span></button>
+      <div class="fineprint">BEST EXPERIENCED ON DESKTOP · HEADPHONES RECOMMENDED</div>
+    </div>
+  </div>
+  <div class="toast" id="toast">SIGNAL FRAGMENT RECOVERED</div>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
